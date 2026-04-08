@@ -2,6 +2,8 @@
 
 Classifying library catalog search queries into **know-item** vs. **thematic** searches using GND lookup and SBERT + logistic regression.
 
+*Developed as part of a library and information science research project, 2025.*
+
 ---
 
 ## Overview
@@ -63,6 +65,7 @@ The annotation tool (`annotation_tool.html`) is a standalone browser app for lab
 ## Setup
 
 ```bash
+Python 3.10+
 pip install -r requirements.txt
 ```
 
