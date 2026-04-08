@@ -2,7 +2,7 @@
 
 Classifying library catalog search queries into **know-item** vs. **thematic** searches using GND lookup and SBERT + logistic regression.
 
-*Developed as part of a library and information science research project, 2025.*
+*Developed as part of a library and information science research project, 2026.*
 
 ---
 
