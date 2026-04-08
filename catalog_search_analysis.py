@@ -1,8 +1,8 @@
 """
 Statistische Analyse: Katalogsuche-Query-Klassifikation
 ========================================================
-Datensatz 1: predictions_withgnd.csv      (Session-basiert, ~96k Queries)
-Datensatz 2: predictions_withgnd_2.csv    (Aggregiert nach Datum, ~25k Queries)
+Datensatz 1: predictions_withgnd.csv      
+Datensatz 2: predictions_withgnd_2.csv    
 
 Voraussetzungen:
     pip install pandas numpy scipy matplotlib seaborn
