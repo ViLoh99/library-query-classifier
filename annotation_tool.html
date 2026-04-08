@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Annotations-Tool — Bibliotheksqueries</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, sans-serif; background: #f5f5f3; color: #1a1a18; min-height: 100vh; }
+
+  .header { background: #fff; border-bottom: 1px solid #e0ddd6; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
+  .header h1 { font-size: 15px; font-weight: 500; }
+  .progress-wrap { display: flex; align-items: center; gap: 12px; }
+  .progress-bar { width: 200px; height: 6px; background: #e0ddd6; border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; background: #4a9e78; border-radius: 3px; transition: width 0.3s; }
+  .progress-text { font-size: 13px; color: #6b6b65; }
+
+  .main { max-width: 700px; margin: 40px auto; padding: 0 24px; }
+
+  .card { background: #fff; border: 1px solid #e0ddd6; border-radius: 12px; padding: 32px; margin-bottom: 20px; }
+
+  .query-label { font-size: 12px; color: #8a8a84; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; }
+  .query-text { font-size: 22px; font-weight: 500; line-height: 1.4; word-break: break-word; margin-bottom: 8px; }
+  .query-meta { font-size: 12px; color: #8a8a84; }
+
+  .buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 24px; }
+  .btn { padding: 16px 20px; border-radius: 8px; border: 1.5px solid; font-size: 15px; font-weight: 500; cursor: pointer; transition: all 0.15s; text-align: left; }
+  .btn:hover { transform: translateY(-1px); }
+  .btn:active { transform: scale(0.98); }
+  .btn-ki  { background: #fef3ef; border-color: #e8845a; color: #7a3520; }
+  .btn-ki:hover  { background: #fde8e0; }
+  .btn-the { background: #eaf5f0; border-color: #4a9e78; color: #1a5c3a; }
+  .btn-the:hover { background: #daf0e8; }
+  .btn-title { font-weight: 600; display: block; margin-bottom: 3px; }
+  .btn-desc  { font-size: 12px; opacity: 0.75; font-weight: 400; }
+
+  .btn-skip { width: 100%; padding: 10px; background: none; border: 1px solid #e0ddd6; border-radius: 8px; color: #8a8a84; font-size: 13px; cursor: pointer; margin-top: 8px; }
+  .btn-skip:hover { background: #f5f5f3; }
+
+  .hint-box { background: #f5f5f3; border-radius: 8px; padding: 14px 16px; margin-top: 16px; font-size: 13px; color: #5a5a54; line-height: 1.6; }
+  .hint-box strong { color: #1a1a18; font-weight: 500; }
+
+  .stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+  .stat { background: #fff; border: 1px solid #e0ddd6; border-radius: 8px; padding: 12px 16px; text-align: center; }
+  .stat-val { font-size: 22px; font-weight: 500; }
+  .stat-lbl { font-size: 11px; color: #8a8a84; margin-top: 2px; }
+  .stat-ki  .stat-val { color: #c05530; }
+  .stat-the .stat-val { color: #2a7a55; }
+  .stat-rem .stat-val { color: #5a5a54; }
+
+  .done { text-align: center; padding: 40px; }
+  .done h2 { font-size: 20px; font-weight: 500; margin-bottom: 12px; }
+  .done p { color: #6b6b65; font-size: 14px; margin-bottom: 20px; }
+
+  .export-btn { background: #1a1a18; color: #fff; border: none; border-radius: 8px; padding: 12px 24px; font-size: 14px; font-weight: 500; cursor: pointer; }
+  .export-btn:hover { background: #333; }
+
+  .undo-btn { background: none; border: none; color: #8a8a84; font-size: 13px; cursor: pointer; padding: 4px 8px; border-radius: 4px; }
+  .undo-btn:hover { background: #f0ede8; color: #1a1a18; }
+
+  .keyboard-hint { font-size: 12px; color: #aaa; text-align: center; margin-top: 8px; }
+  kbd { background: #f0ede8; border: 1px solid #ddd; border-radius: 3px; padding: 1px 5px; font-size: 11px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Query-Annotation</h1>
+  <div class="progress-wrap">
+    <div class="progress-bar"><div class="progress-fill" id="progFill" style="width:0%"></div></div>
+    <span class="progress-text" id="progText">0 / 0</span>
+    <button class="undo-btn" onclick="undo()">↩ Rückgängig</button>
+  </div>
+</div>
+
+<div class="main">
+
+  <div class="stats">
+    <div class="stat stat-ki">
+      <div class="stat-val" id="cntKI">0</div>
+      <div class="stat-lbl">Know-Item</div>
+    </div>
+    <div class="stat stat-the">
+      <div class="stat-val" id="cntTH">0</div>
+      <div class="stat-lbl">Thematisch</div>
+    </div>
+    <div class="stat stat-rem">
+      <div class="stat-val" id="cntRem">—</div>
+      <div class="stat-lbl">Verbleibend</div>
+    </div>
+  </div>
+
+  <div class="card" id="mainCard">
+    <div class="query-label">Suchanfrage</div>
+    <div class="query-text" id="queryText">Lade...</div>
+    <div class="query-meta" id="queryMeta"></div>
+
+    <div class="buttons">
+      <button class="btn btn-ki" onclick="annotate('know-item')" id="btnKI">
+        <span class="btn-title">Know-Item</span>
+        <span class="btn-desc">Sucht ein bestimmtes Werk oder Person</span>
+      </button>
+      <button class="btn btn-the" onclick="annotate('thematisch')" id="btnTH">
+        <span class="btn-title">Thematisch</span>
+        <span class="btn-desc">Sucht zu einem Thema oder Sachgebiet</span>
+      </button>
+    </div>
+    <button class="btn-skip" onclick="annotate('skip')">Überspringen (unklar / nicht entscheidbar)</button>
+    <div class="keyboard-hint"><kbd>K</kbd> Know-Item &nbsp;·&nbsp; <kbd>T</kbd> Thematisch &nbsp;·&nbsp; <kbd>S</kbd> Überspringen &nbsp;·&nbsp; <kbd>Z</kbd> Rückgängig</div>
+
+    <div class="hint-box" id="hintBox"></div>
+  </div>
+
+  <div class="done" id="doneCard" style="display:none">
+    <h2>Alle Queries annotiert ✓</h2>
+    <p>Exportiere die Ergebnisse als CSV und speichere sie im Projektordner.</p>
+    <button class="export-btn" onclick="exportCSV()">CSV exportieren</button>
+  </div>
+
+</div>
+
+<script>
+// ── Daten ──────────────────────────────────────────────────────────────────────
+// CSV hier einfügen — wird beim Laden aus der Datei ersetzt
+// Format: keyword;count;token_count
+// Du kannst auch direkt eine Datei laden (siehe Ladefunktion unten)
+
+let queries = [];
+let current = 0;
+let annotations = [];
+let history = [];
+
+// ── Grenzfall-Hinweise ─────────────────────────────────────────────────────────
+const hints = [
+  { pattern: /^\d+$/, text: "<strong>Nur Zahlen</strong> → Know-Item (ID-Suche)" },
+  { pattern: /97[89]\d{10}/, text: "<strong>ISBN</strong> → Know-Item" },
+  { pattern: /<</, text: "<strong>GND-Notation &lt;&lt;&gt;&gt;</strong> → Know-Item" },
+  { pattern: /^[A-ZÄÖÜ][a-zäöüß]+,\s/, text: "<strong>Komma-Muster</strong> (Nachname, Vorname) → Know-Item" },
+  { pattern: /\b(1[5-9]|20)\d{2}\b/, text: "<strong>Jahreszahl</strong> im Query → meist Know-Item" },
+  { pattern: /\b(einführung|grundlagen|überblick|einleitung|handbuch|lehrbuch)\b/i, text: "<strong>Gattungswort</strong> (Einführung, Handbuch...) → meist Thematisch" },
+  { pattern: /\bOR\b/, text: "<strong>OR-Query</strong> → Sonderfall (maschinengeneriert)" },
+];
+
+function getHint(q) {
+  for (const h of hints) {
+    if (h.pattern.test(q)) return h.text;
+  }
+  const tokens = q.trim().split(/\s+/);
+  if (tokens.length === 1) return "Einzelwort — <strong>Eigenname?</strong> → Know-Item · <strong>Sachbegriff?</strong> → Thematisch";
+  if (tokens.length === 2) return "Zwei Token — häufigster Grenzfall: Autor+Thema → Know-Item · Thema+Einschränkung → Thematisch";
+  return "";
+}
+
+// ── Rendering ──────────────────────────────────────────────────────────────────
+function render() {
+  if (current >= queries.length) {
+    document.getElementById("mainCard").style.display = "none";
+    document.getElementById("doneCard").style.display = "block";
+    updateStats();
+    return;
+  }
+
+  const q = queries[current];
+  document.getElementById("queryText").textContent = q.keyword;
+  document.getElementById("queryMeta").textContent =
+    `${q.token_count} Token · ${q.count}× in den Logs`;
+
+  const hint = getHint(q.keyword);
+  const hintBox = document.getElementById("hintBox");
+  hintBox.innerHTML = hint || "";
+  hintBox.style.display = hint ? "block" : "none";
+
+  updateStats();
+}
+
+function updateStats() {
+  const ki  = annotations.filter(a => a.label === "know-item").length;
+  const th  = annotations.filter(a => a.label === "thematisch").length;
+  const rem = queries.length - current;
+  document.getElementById("cntKI").textContent  = ki;
+  document.getElementById("cntTH").textContent  = th;
+  document.getElementById("cntRem").textContent = rem;
+
+  const pct = queries.length ? (current / queries.length * 100) : 0;
+  document.getElementById("progFill").style.width = pct + "%";
+  document.getElementById("progText").textContent =
+    `${current} / ${queries.length}`;
+}
+
+// ── Annotation ─────────────────────────────────────────────────────────────────
+function annotate(label) {
+  if (current >= queries.length) return;
+  const q = queries[current];
+  history.push({ index: current, prev: [...annotations] });
+  annotations.push({ keyword: q.keyword, count: q.count, label });
+  current++;
+  render();
+}
+
+function undo() {
+  if (!history.length) return;
+  const last = history.pop();
+  annotations = last.prev;
+  current = last.index;
+  render();
+}
+
+// ── CSV laden ──────────────────────────────────────────────────────────────────
+function parseCSV(text) {
+  const lines = text.trim().split("\n");
+  const header = lines[0].split(";");
+  return lines.slice(1).map(line => {
+    // Semikolon-Split der einfachen Felder
+    const parts = line.split(";");
+    return {
+      keyword:     parts[0] ? parts[0].replace(/^"|"$/g, "") : "",
+      count:       parseInt(parts[1]) || 1,
+      token_count: parseInt(parts[2]) || 1,
+      label:       parts[3] || "",
+    };
+  }).filter(r => r.keyword.length > 0);
+}
+
+// Datei-Ladebutton (optional)
+function loadFile() {
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = ".csv";
+  input.onchange = e => {
+    const file = e.target.files[0];
+    const reader = new FileReader();
+    reader.onload = ev => {
+      queries = parseCSV(ev.target.result);
+      current = 0;
+      annotations = [];
+      history = [];
+      render();
+    };
+    reader.readAsText(file, "utf-8");
+  };
+  input.click();
+}
+
+// ── CSV exportieren ────────────────────────────────────────────────────────────
+function exportCSV() {
+  const header = "keyword;count;label";
+  const rows = annotations
+    .filter(a => a.label !== "skip")
+    .map(a => `"${a.keyword.replace(/"/g, '""')}";${a.count};${a.label}`);
+  const csv = [header, ...rows].join("\n");
+  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "annotationen.csv";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ── Tastaturkürzel ─────────────────────────────────────────────────────────────
+document.addEventListener("keydown", e => {
+  if (e.target.tagName === "INPUT") return;
+  if (e.key === "k" || e.key === "K") annotate("know-item");
+  if (e.key === "t" || e.key === "T") annotate("thematisch");
+  if (e.key === "s" || e.key === "S") annotate("skip");
+  if (e.key === "z" || e.key === "Z") undo();
+});
+
+// ── Init: CSV-Ladefenster beim Start ──────────────────────────────────────────
+window.onload = () => {
+  document.getElementById("queryText").innerHTML =
+    `<span style="font-size:16px;color:#888">
+      Klicke unten um die annotation_sample.csv zu laden
+    </span>`;
+  document.getElementById("hintBox").style.display = "none";
+
+  // Lade-Button ins Card einfügen
+  const card = document.getElementById("mainCard");
+  const loadBtn = document.createElement("button");
+  loadBtn.className = "export-btn";
+  loadBtn.style.marginTop = "20px";
+  loadBtn.style.width = "100%";
+  loadBtn.textContent = "📂  annotation_sample.csv laden";
+  loadBtn.onclick = loadFile;
+  card.appendChild(loadBtn);
+
+  // Buttons erstmal deaktivieren
+  document.getElementById("btnKI").disabled = true;
+  document.getElementById("btnTH").disabled = true;
+  document.querySelector(".btn-skip").disabled = true;
+
+  // Aktivieren sobald Datei geladen
+  const origLoad = loadFile;
+  loadBtn.onclick = () => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".csv";
+    input.onchange = e => {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onload = ev => {
+        queries = parseCSV(ev.target.result);
+        current = 0; annotations = []; history = [];
+        loadBtn.remove();
+        document.getElementById("btnKI").disabled = false;
+        document.getElementById("btnTH").disabled = false;
+        document.querySelector(".btn-skip").disabled = false;
+        render();
+      };
+      reader.readAsText(file, "utf-8");
+    };
+    input.click();
+  };
+
+  updateStats();
+};
+</script>
+</body>
+</html>
