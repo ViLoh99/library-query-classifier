@@ -64,6 +64,8 @@ The annotation tool (`annotation_tool.html`) is a standalone browser app for lab
 
 ## Setup
 
+> Note: Code comments and analysis output (reports, plot labels) are in German, as the project was conducted in a German-speaking context.
+
 ```bash
 Python 3.10+
 pip install -r requirements.txt
