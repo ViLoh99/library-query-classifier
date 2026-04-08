@@ -86,7 +86,7 @@ wget https://data.dnb.de/opendata/authorities-gnd-sachbegriff_lds.jsonld.gz
 |---|---|---|
 | Sentence encoder | `paraphrase-multilingual-MiniLM-L12-v2` | Good German support, small (~120 MB), fast |
 | Classifier | Logistic Regression | Stable at ~1,000 samples, interpretable |
-| Class weights | `balanced` | Compensates for natural know-item / thematic imbalance (~1.4:1) |
+| Class weights | `balanced` | Compensates for natural know-item / thematic imbalance (~1.4:1 on test-set) |
 
 ---
 
